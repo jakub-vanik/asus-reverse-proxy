@@ -5,7 +5,8 @@
 #include <cstring>
 #include <sys/socket.h>
 
-enum FieldSize {
+enum FieldSize
+{
   FIELD_SIZE_BYTE = 1,
   FIELD_SIZE_WORD = 2,
   FIELD_SIZE_LONG = 4
