@@ -53,7 +53,7 @@ ServerBase::ThreadInfo *ServerBase::CreateThread()
 {
   ThreadInfo *next = new ThreadInfo();
   next->server = this;
-  next->reduce = true;
+  next->status = THREAD_STATUS_CAN_REDUCE;
   while (pthread_create(&next->thread, NULL, SlaveThread, next) != 0)
   {
     sleep(1);
@@ -64,7 +64,7 @@ ServerBase::ThreadInfo *ServerBase::CreateThread()
 
 ServerBase::ThreadInfo *ServerBase::ReduceThread(ThreadInfo *next)
 {
-  next->reduce = false;
+  next->status = THREAD_STATUS_MUST_TERMINATE;
   ThreadInfo *result;
   pthread_join(next->thread, (void **) &result);
   logger.Log("port %d, thread %d: thread %d joined", port, pthread_self(), next->thread);
@@ -93,7 +93,7 @@ ServerBase::ThreadInfo *ServerBase::WaitClient(ThreadInfo *current)
   StartConnection(fd);
   close(fd);
   logger.Log("port %d, thread %d: client %s disconnected", port, pthread_self(), inet_ntoa(address.sin_addr));
-  while (next != NULL && current->reduce)
+  while (next != NULL && current->status == THREAD_STATUS_CAN_REDUCE)
   {
     next = ReduceThread(next);
   }

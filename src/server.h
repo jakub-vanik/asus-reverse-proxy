@@ -19,11 +19,16 @@ public:
   ServerBase(Logger &logger, Resolver &resolver, int port);
   virtual ~ServerBase();
 protected:
+  enum ThreadStatus
+  {
+    THREAD_STATUS_MUST_TERMINATE,
+    THREAD_STATUS_CAN_REDUCE
+  };
   struct ThreadInfo
   {
     pthread_t thread;
     ServerBase* server;
-    volatile bool reduce;
+    volatile ThreadStatus status;
   };
   Logger &logger;
   Resolver &resolver;
