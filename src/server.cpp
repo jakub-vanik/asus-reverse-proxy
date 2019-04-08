@@ -19,12 +19,12 @@ ServerBase::ServerBase(Logger &logger, Resolver &resolver, int port) :
     close(listenFd);
     return;
   }
-  if (listen(listenFd, 128) < 0)
+  if (listen(listenFd, BACKLOG_SIZE) < 0)
   {
     close(listenFd);
     return;
   }
-  sem_init(&semaphore, 0, 16);
+  sem_init(&semaphore, 0, MAX_CLIENTS);
   while (pthread_create(&thread, NULL, MasterThread, this) != 0)
   {
     sleep(1);
