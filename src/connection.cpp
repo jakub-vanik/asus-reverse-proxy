@@ -191,21 +191,21 @@ bool SslConnection::ProcessRequest()
 {
   Checked(inputStream.WriteFromSocket(serverFd, 5, true));
   int contentType;
-  Checked(inputStream.ReadNumber(contentType, 1));
+  Checked(inputStream.ReadNumber(contentType, FIELD_SIZE_BYTE));
   if (contentType == 22)
   {
     Checked(inputStream.ReadSeek(3, false));
     int length;
-    Checked(inputStream.ReadNumber(length, 2));
+    Checked(inputStream.ReadNumber(length, FIELD_SIZE_WORD));
     Checked(inputStream.WriteFromSocket(serverFd, length, true));
     int hanshakeType;
-    Checked(inputStream.ReadNumber(hanshakeType, 1));
+    Checked(inputStream.ReadNumber(hanshakeType, FIELD_SIZE_BYTE));
     if (hanshakeType == 1)
     {
       Checked(inputStream.ReadSeek(43, false));
-      Checked(SkipBlock(1));
-      Checked(SkipBlock(2));
-      Checked(SkipBlock(1));
+      Checked(SkipBlock(FIELD_SIZE_BYTE));
+      Checked(SkipBlock(FIELD_SIZE_WORD));
+      Checked(SkipBlock(FIELD_SIZE_BYTE));
       Checked(ParseExtensions());
       return true;
     }
@@ -213,7 +213,7 @@ bool SslConnection::ProcessRequest()
   return false;
 }
 
-bool SslConnection::SkipBlock(int size)
+bool SslConnection::SkipBlock(FieldSize size)
 {
   int blockSize;
   Checked(inputStream.ReadNumber(blockSize, size));
@@ -224,14 +224,14 @@ bool SslConnection::SkipBlock(int size)
 bool SslConnection::ParseExtensions()
 {
   int blockSize;
-  Checked(inputStream.ReadNumber(blockSize, 2));
+  Checked(inputStream.ReadNumber(blockSize, FIELD_SIZE_WORD));
   int processedBytes = 0;
   while (processedBytes < blockSize)
   {
     int recordType;
-    Checked(inputStream.ReadNumber(recordType, 2));
+    Checked(inputStream.ReadNumber(recordType, FIELD_SIZE_WORD));
     int recordSize;
-    Checked(inputStream.ReadNumber(recordSize, 2));
+    Checked(inputStream.ReadNumber(recordSize, FIELD_SIZE_WORD));
     long position = inputStream.ReadPosition();
     if (recordType == 0)
     {
@@ -246,14 +246,14 @@ bool SslConnection::ParseExtensions()
 bool SslConnection::ParseServerName()
 {
   int blockSize;
-  Checked(inputStream.ReadNumber(blockSize, 2));
+  Checked(inputStream.ReadNumber(blockSize, FIELD_SIZE_WORD));
   int processedBytes = 0;
   while (processedBytes < blockSize)
   {
     int recordType;
-    Checked(inputStream.ReadNumber(recordType, 1));
+    Checked(inputStream.ReadNumber(recordType, FIELD_SIZE_BYTE));
     int recordSize;
-    Checked(inputStream.ReadNumber(recordSize, 2));
+    Checked(inputStream.ReadNumber(recordSize, FIELD_SIZE_WORD));
     long position = inputStream.ReadPosition();
     if (recordType == 0)
     {

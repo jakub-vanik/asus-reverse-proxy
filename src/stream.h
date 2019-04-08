@@ -5,6 +5,12 @@
 #include <cstring>
 #include <sys/socket.h>
 
+enum FieldSize {
+  FIELD_SIZE_BYTE = 1,
+  FIELD_SIZE_WORD = 2,
+  FIELD_SIZE_LONG = 4
+};
+
 class Stream
 {
 public:
@@ -15,7 +21,7 @@ public:
   int ReadPosition();
   int ReadAvailable();
   bool ReadSeek(int pos, bool relative);
-  bool ReadNumber(int &value, int bytes);
+  bool ReadNumber(int &value, FieldSize size);
   bool ReadData(char *buff, int bytes);
   bool ReadLine(char *buff, int bytes);
   bool ReadToSocket(int fd, int bytes);

@@ -56,7 +56,7 @@ public:
 protected:
   bool ProcessRequest();
   bool ProcessHello();
-  bool SkipBlock(int size);
+  bool SkipBlock(FieldSize size);
   bool ParseExtensions();
   bool ParseServerName();
 };

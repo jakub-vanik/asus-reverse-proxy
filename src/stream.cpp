@@ -73,8 +73,9 @@ bool Stream::ReadSeek(int pos, bool relative)
   return true;
 }
 
-bool Stream::ReadNumber(int &value, int bytes)
+bool Stream::ReadNumber(int &value, FieldSize size)
 {
+  int bytes = static_cast<int>(size);
   if (!CanRead(bytes))
   {
     return false;
