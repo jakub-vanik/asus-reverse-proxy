@@ -10,13 +10,14 @@
 #include <unistd.h>
 #include "config.h"
 #include "connection.h"
+#include "filter.h"
 #include "logger.h"
 #include "resolver.h"
 
 class ServerBase
 {
 public:
-  ServerBase(Logger &logger, Resolver &resolver, int port);
+  ServerBase(Logger &logger, Resolver &resolver, Filter &filter, int port);
   virtual ~ServerBase();
 protected:
   enum ThreadStatus
@@ -32,6 +33,7 @@ protected:
   };
   Logger &logger;
   Resolver &resolver;
+  Filter &filter;
   int port;
   int listenFd;
   pthread_t thread;
@@ -40,7 +42,7 @@ protected:
   ThreadInfo *CreateThread();
   ThreadInfo *ReduceThread(ThreadInfo *next);
   ThreadInfo *WaitClient(ThreadInfo *current);
-  virtual void StartConnection(int fd) = 0;
+  virtual void StartConnection(int fd, sockaddr_in *address) = 0;
   static void *MasterThread(void *param);
   static void *SlaveThread(void *param);
 };
@@ -49,22 +51,22 @@ template<class T>
 class Server: public ServerBase
 {
 public:
-  Server(Logger &logger, Resolver &resolver, int port);
+  Server(Logger &logger, Resolver &resolver, Filter &filter, int port);
 
 protected:
-  void StartConnection(int fd);
+  void StartConnection(int fd, sockaddr_in *addr);
 };
 
 class HttpServer: public Server<HttpConnection>
 {
 public:
-  HttpServer(Logger &logger, Resolver &resolver, int port);
+  HttpServer(Logger &logger, Resolver &resolver, Filter &filter, int port);
 };
 
 class SslServer: public Server<SslConnection>
 {
 public:
-  SslServer(Logger &logger, Resolver &resolver, int port);
+  SslServer(Logger &logger, Resolver &resolver, Filter &filter, int port);
 };
 
 #endif

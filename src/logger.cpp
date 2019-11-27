@@ -1,6 +1,6 @@
 #include "logger.h"
 
-Logger::Logger(char* fileName)
+Logger::Logger(const char* fileName)
 {
 #if LOG_ENABLED
   file = fopen(fileName, "w+");

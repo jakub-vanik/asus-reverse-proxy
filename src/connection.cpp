@@ -2,12 +2,13 @@
 
 #define Checked(f) if(!(f)) return false
 
-Connection::Connection(Logger &logger, Resolver &resolver, int port, int fd) :
-    logger(logger), resolver(resolver)
+Connection::Connection(Logger &logger, Resolver &resolver, Filter &filter, int port, int fd, sockaddr_in *addr) :
+    logger(logger), resolver(resolver), filter(filter)
 {
   this->port = port;
   serverFd = fd;
   clientFd = -1;
+  peerAddr = addr;
   hostName = NULL;
 }
 
@@ -35,16 +36,19 @@ bool Connection::HandleClient()
   const char *host = resolver.Resolve(hostName);
   if (host)
   {
-    logger.Log("port %d, thread %d: connecting to %s", port, pthread_self(), host);
-    Checked(ConnectClient(host));
-    logger.Log("port %d, thread %d: client connection established", port, pthread_self());
-    Checked(inputStream.ReadSeek(0, false));
-    int bytes = inputStream.ReadAvailable();
-    Checked(inputStream.ReadToSocket(clientFd, inputStream.ReadAvailable()));
-    logger.Log("port %d, thread %d: %d bytes resent", port, pthread_self(), bytes);
-    inputStream.Reset();
-    ProxyConnection();
-    return true;
+    if (filter.Validate(hostName, peerAddr))
+    {
+      logger.Log("port %d, thread %d: connecting to %s", port, pthread_self(), host);
+      Checked(ConnectClient(host));
+      logger.Log("port %d, thread %d: client connection established", port, pthread_self());
+      Checked(inputStream.ReadSeek(0, false));
+      int bytes = inputStream.ReadAvailable();
+      Checked(inputStream.ReadToSocket(clientFd, inputStream.ReadAvailable()));
+      logger.Log("port %d, thread %d: %d bytes resent", port, pthread_self(), bytes);
+      inputStream.Reset();
+      ProxyConnection();
+      return true;
+    }
   }
   return false;
 }
@@ -139,8 +143,8 @@ void *Connection::Thread(void *param)
   return NULL;
 }
 
-HttpConnection::HttpConnection(Logger &logger, Resolver &resolver, int port, int fd) :
-    Connection(logger, resolver, port, fd)
+HttpConnection::HttpConnection(Logger &logger, Resolver &resolver, Filter &filter, int port, int fd, sockaddr_in *addr) :
+    Connection(logger, resolver, filter, port, fd, addr)
 {
 }
 
@@ -182,8 +186,8 @@ bool HttpConnection::StartsWith(const char *str, const char *substr)
   return memcmp(str, substr, strlen(substr)) == 0;
 }
 
-SslConnection::SslConnection(Logger &logger, Resolver &resolver, int port, int fd) :
-    Connection(logger, resolver, port, fd)
+SslConnection::SslConnection(Logger &logger, Resolver &resolver, Filter &filter, int port, int fd, sockaddr_in *addr) :
+    Connection(logger, resolver, filter, port, fd, addr)
 {
 }
 

@@ -1,4 +1,4 @@
 #!/bin/sh
 
-cp proxy hosts /tmp &&
+cp proxy hosts filter.conf /tmp &&
 (cd /tmp && nohup ./proxy >/dev/null) &

@@ -8,7 +8,7 @@
 class Resolver
 {
 public:
-  Resolver(char *fileName);
+  Resolver(const char *fileName);
   ~Resolver();
   const char *Resolve(char *hostName);
 private:
@@ -19,8 +19,8 @@ private:
   };
   Record *records;
   int recordsCount;
-  void ProcessLine(char* line, int length);
-  char *ExtractString(char* line, int lineLength, int &position, int &stringLength);
+  void ProcessLine(char *line, int length);
+  char *ExtractString(char *line, int lineLength, int &position, int &stringLength);
   bool AddRecord(char *hostName, int hostNameLength, char *address, int addressLength);
 };
 

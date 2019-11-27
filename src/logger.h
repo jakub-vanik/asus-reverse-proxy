@@ -12,7 +12,7 @@
 class Logger
 {
 public:
-  Logger(char* fileName);
+  Logger(const char* fileName);
   ~Logger();
   void Log(const char *format, ...);
 private:

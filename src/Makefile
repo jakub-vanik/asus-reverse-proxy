@@ -1,6 +1,6 @@
 CC=LD_LIBRARY_PATH=$(TOOLCHAIN_BASE)/lib $(TOOLCHAIN_BASE)/bin/arm-brcm-linux-uclibcgnueabi-g++
-CFLAGS=-I$(TOOLCHAIN_BASE)/usr/include -O3 -Wall
-OBJ=connection.o iptables.o logger.o main.o resolver.o server.o stream.o
+CFLAGS=-I$(TOOLCHAIN_BASE)/usr/include -std=c++0x -O3 -Wall
+OBJ=connection.o filter.o iptables.o logger.o main.o resolver.o server.o stream.o
 LIBS=-lpthread -static-libstdc++
 
 all: proxy
@@ -15,4 +15,4 @@ clean:
 	rm -f $(OBJ) proxy
 
 deploy: proxy
-	scp proxy hosts autorun.sh admin@192.168.1.1:/mnt/sda1
+	scp proxy hosts filter.conf autorun.sh admin@192.168.1.1:/mnt/sda1

@@ -1,7 +1,7 @@
 #include "server.h"
 
-ServerBase::ServerBase(Logger &logger, Resolver &resolver, int port) :
-    logger(logger), resolver(resolver)
+ServerBase::ServerBase(Logger &logger, Resolver &resolver, Filter &filter, int port) :
+    logger(logger), resolver(resolver), filter(filter)
 {
   this->port = port;
   listenFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -90,7 +90,7 @@ ServerBase::ThreadInfo *ServerBase::WaitClient(ThreadInfo *current)
   }
   logger.Log("port %d, thread %d: client %s connected", port, pthread_self(), inet_ntoa(address.sin_addr));
   ThreadInfo *next = CreateThread();
-  StartConnection(fd);
+  StartConnection(fd, &address);
   close(fd);
   logger.Log("port %d, thread %d: client %s disconnected", port, pthread_self(), inet_ntoa(address.sin_addr));
   while (next != NULL && current->status == THREAD_STATUS_CAN_REDUCE)
@@ -114,24 +114,24 @@ void *ServerBase::SlaveThread(void *param)
 }
 
 template<class T>
-Server<T>::Server(Logger &logger, Resolver &resolver, int port) :
-    ServerBase(logger, resolver, port)
+Server<T>::Server(Logger &logger, Resolver &resolver, Filter &filter, int port) :
+    ServerBase(logger, resolver, filter, port)
 {
 }
 
 template<class T>
-void Server<T>::StartConnection(int fd)
+void Server<T>::StartConnection(int fd, sockaddr_in *addr)
 {
-  T connection(logger, resolver, port, fd);
+  T connection(logger, resolver, filter, port, fd, addr);
   connection.Start();
 }
 
-HttpServer::HttpServer(Logger &logger, Resolver &resolver, int port) :
-    Server<HttpConnection>(logger, resolver, port)
+HttpServer::HttpServer(Logger &logger, Resolver &resolver, Filter &filter, int port) :
+    Server<HttpConnection>(logger, resolver, filter, port)
 {
 }
 
-SslServer::SslServer(Logger &logger, Resolver &resolver, int port) :
-    Server<SslConnection>(logger, resolver, port)
+SslServer::SslServer(Logger &logger, Resolver &resolver, Filter &filter, int port) :
+    Server<SslConnection>(logger, resolver, filter, port)
 {
 }

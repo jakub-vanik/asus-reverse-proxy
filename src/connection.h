@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "config.h"
+#include "filter.h"
 #include "logger.h"
 #include "resolver.h"
 #include "stream.h"
@@ -15,15 +16,17 @@
 class Connection
 {
 public:
-  Connection(Logger &logger, Resolver &resolver, int port, int fd);
+  Connection(Logger &logger, Resolver &resolver, Filter &filter, int port, int fd, sockaddr_in *addr);
   virtual ~Connection();
   void Start();
 protected:
   Logger &logger;
   Resolver &resolver;
+  Filter &filter;
   int port;
   int serverFd;
   int clientFd;
+  sockaddr_in *peerAddr;
   char *hostName;
   Stream inputStream;
   Stream outputStream;
@@ -41,7 +44,7 @@ protected:
 class HttpConnection: public Connection
 {
 public:
-  HttpConnection(Logger &logger, Resolver &resolver, int port, int fd);
+  HttpConnection(Logger &logger, Resolver &resolver, Filter &filter, int port, int fd, sockaddr_in *addr);
 
 protected:
   bool ProcessRequest();
@@ -51,7 +54,7 @@ protected:
 class SslConnection: public Connection
 {
 public:
-  SslConnection(Logger &logger, Resolver &resolver, int port, int fd);
+  SslConnection(Logger &logger, Resolver &resolver, Filter &filter, int port, int fd, sockaddr_in *addr);
 
 protected:
   bool ProcessRequest();

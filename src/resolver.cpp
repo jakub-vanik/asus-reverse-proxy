@@ -1,6 +1,6 @@
 #include "resolver.h"
 
-Resolver::Resolver(char *fileName)
+Resolver::Resolver(const char *fileName)
 {
   records = NULL;
   recordsCount = 0;

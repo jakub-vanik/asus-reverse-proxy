@@ -19,10 +19,11 @@ int main(void)
   action.sa_handler = term;
   sigaction(SIGINT, &action, NULL);
   sigaction(SIGTERM, &action, NULL);
-  Logger logger((char *) "./router.log");
-  Resolver resolver((char *) "./hosts");
-  HttpServer httpServer(logger, resolver, 80);
-  SslServer sslServer(logger, resolver, 443);
+  Logger logger((const char *) "./router.log");
+  Resolver resolver((const char *) "./hosts");
+  Filter filter((const char *) "./filter.conf");
+  HttpServer httpServer(logger, resolver, filter, 80);
+  SslServer sslServer(logger, resolver, filter, 443);
   while (running)
   {
     Iptables::ForwardPort(80);
