@@ -16,14 +16,20 @@ Resolver::Resolver(char *fileName)
       {
         break;
       }
+      bool found = false;
       for (int i = 0; i < count; i++)
       {
         if (line[i] == '\n')
         {
           ProcessLine(line, i);
           position += i + 1;
+          found = true;
           break;
         }
+      }
+      if (!found)
+      {
+        exit(EXIT_FAILURE);
       }
       fseek(file, position, SEEK_SET);
       clearerr(file);
@@ -63,7 +69,7 @@ const char *Resolver::Resolve(char *hostName)
   return NULL;
 }
 
-void Resolver::ProcessLine(char* line, int length)
+void Resolver::ProcessLine(char *line, int length)
 {
   int position = 0;
   int addressLength;
@@ -79,7 +85,7 @@ void Resolver::ProcessLine(char* line, int length)
   }
 }
 
-char *Resolver::ExtractString(char* line, int lineLength, int &position, int &stringLength)
+char *Resolver::ExtractString(char *line, int lineLength, int &position, int &stringLength)
 {
   stringLength = 0;
   while (position < lineLength && line[position] != '#' && (line[position] == ' ' || line[position] == '\t'))
