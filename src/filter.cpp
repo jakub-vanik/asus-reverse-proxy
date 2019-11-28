@@ -1,5 +1,7 @@
 #include "filter.h"
 
+#define Checked(f) if(!(f)) exit(EXIT_FAILURE)
+
 Filter::Filter(const char *fileName)
 {
 #if FILTER_ENABLED
@@ -24,53 +26,26 @@ Filter::Filter(const char *fileName)
       if (wordLength)
       {
         Keyword keyword;
-        if (!ParseKeyword(word, wordLength, keyword))
-        {
-          exit(EXIT_FAILURE);
-        }
+        Checked(ParseKeyword(word, wordLength, keyword));
         if (keyword == Keyword::zone)
         {
-          if (!AddZoneRecord(&zoneRecord))
-          {
-            exit(EXIT_FAILURE);
-          }
+          Checked(AddZoneRecord(&zoneRecord));
         }
         if (keyword == Keyword::host)
         {
-          if (!zoneRecord)
-          {
-            exit(EXIT_FAILURE);
-          }
           int hostNameLength;
           char *hostName = ExtractString(buffer, count, bufferPosition, hostNameLength);
-          if (hostNameLength == 0)
-          {
-            exit(EXIT_FAILURE);
-          }
-          if (!AddHostName(zoneRecord, hostName, hostNameLength))
-          {
-            exit(EXIT_FAILURE);
-          }
+          Checked(AddHostName(zoneRecord, hostName, hostNameLength));
         }
         if (keyword == Keyword::allow || keyword == Keyword::deny)
         {
-          if (!zoneRecord)
-          {
-            exit(EXIT_FAILURE);
-          }
           RuleRecord ruleRecord = {0};
           ruleRecord.allow = (keyword == Keyword::allow);
           ruleRecord.deny = (keyword == Keyword::deny);
           int addressRangeLength;
           char *addressRange = ExtractString(buffer, count, bufferPosition, addressRangeLength);
-          if (!ParseAddressRange(addressRange, addressRangeLength, &ruleRecord))
-          {
-            exit(EXIT_FAILURE);
-          }
-          if (!AddRuleRecord(zoneRecord, &ruleRecord))
-          {
-            exit(EXIT_FAILURE);
-          }
+          Checked(ParseAddressRange(addressRange, addressRangeLength, &ruleRecord));
+          Checked(AddRuleRecord(zoneRecord, &ruleRecord));
         }
       }
       position += bufferPosition;
@@ -105,9 +80,20 @@ Filter::~Filter()
 #endif
 }
 
-bool Filter::Validate(const char *hostName, sockaddr_in *peerAddr)
+bool Filter::Validate(const char *path, const char *hostName, sockaddr_in *peerAddr)
 {
 #if FILTER_ENABLED
+#if FILTER_CERTBOT
+  if (path)
+  {
+    const char *allowed = "/.well-known/acme-challenge/";
+    size_t length = strlen(allowed);
+    if (strlen(path) >= length && memcmp(path, allowed, length) == 0)
+    {
+      return true;
+    }
+  }
+#endif
   if (hostName)
   {
     for (int i = 0; i < zoneRecordsCount; i++)
@@ -235,6 +221,14 @@ bool Filter::AddZoneRecord(Filter::ZoneRecord **zoneRecord)
 
 bool Filter::AddHostName(Filter::ZoneRecord *zoneRecord, char *hostName, int hostNameLength)
 {
+  if (!zoneRecord)
+  {
+    return false;
+  }
+  if (hostNameLength == 0)
+  {
+    return false;
+  }
   char **newHostNames = (char **) realloc(zoneRecord->hostNames, (zoneRecord->hostNamesCount + 1) * sizeof(char *));
   if (!newHostNames)
   {
@@ -255,6 +249,10 @@ bool Filter::AddHostName(Filter::ZoneRecord *zoneRecord, char *hostName, int hos
 
 bool Filter::AddRuleRecord(Filter::ZoneRecord *zoneRecord, Filter::RuleRecord *ruleRecord)
 {
+  if (!zoneRecord)
+  {
+    return false;
+  }
   RuleRecord *newRuleRecords = (RuleRecord *) realloc(zoneRecord->ruleRecords, (zoneRecord->ruleRecordsCount + 1) * sizeof(RuleRecord));
   if (!newRuleRecords)
   {

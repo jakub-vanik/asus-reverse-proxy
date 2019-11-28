@@ -27,6 +27,7 @@ protected:
   int serverFd;
   int clientFd;
   sockaddr_in *peerAddr;
+  char *path;
   char *hostName;
   Stream inputStream;
   Stream outputStream;
@@ -45,9 +46,10 @@ class HttpConnection: public Connection
 {
 public:
   HttpConnection(Logger &logger, Resolver &resolver, Filter &filter, int port, int fd, sockaddr_in *addr);
-
 protected:
   bool ProcessRequest();
+  bool ParseFirstLine(const char *line);
+  bool ParseHostLine(const char *line);
   bool StartsWith(const char *str, const char *substr);
 };
 
@@ -55,7 +57,6 @@ class SslConnection: public Connection
 {
 public:
   SslConnection(Logger &logger, Resolver &resolver, Filter &filter, int port, int fd, sockaddr_in *addr);
-
 protected:
   bool ProcessRequest();
   bool ProcessHello();

@@ -12,7 +12,7 @@ class Filter
 public:
   Filter(const char *fileName);
   ~Filter();
-  bool Validate(const char *hostName, sockaddr_in *peerAddr);
+  bool Validate(const char *path, const char *hostName, sockaddr_in *peerAddr);
 private:
 #if FILTER_ENABLED
   enum struct Keyword

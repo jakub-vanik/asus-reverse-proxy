@@ -9,11 +9,17 @@ Connection::Connection(Logger &logger, Resolver &resolver, Filter &filter, int p
   serverFd = fd;
   clientFd = -1;
   peerAddr = addr;
+  path = NULL;
   hostName = NULL;
 }
 
 Connection::~Connection()
 {
+  if (path)
+  {
+    free(path);
+    path = NULL;
+  }
   if (hostName)
   {
     free(hostName);
@@ -36,7 +42,7 @@ bool Connection::HandleClient()
   const char *host = resolver.Resolve(hostName);
   if (host)
   {
-    if (filter.Validate(hostName, peerAddr))
+    if (filter.Validate(path, hostName, peerAddr))
     {
       logger.Log("port %d, thread %d: connecting to %s", port, pthread_self(), host);
       Checked(ConnectClient(host));
@@ -161,6 +167,8 @@ bool HttpConnection::ProcessRequest()
   if (inputStream.WriteFromSocket(serverFd, BUFFER_SIZE, false))
   {
     char line[1024];
+    Checked(inputStream.ReadLine(line, sizeof(line)));
+    Checked(ParseFirstLine(line));
     while (inputStream.ReadLine(line, sizeof(line)))
     {
       if (strlen(line) == 2)
@@ -169,22 +177,68 @@ bool HttpConnection::ProcessRequest()
       }
       if (StartsWith(line, "Host: "))
       {
-        char *pointer = line + 6;
-        int length = strlen(pointer) - 2;
-        if (hostName)
-        {
-          free(hostName);
-          hostName = NULL;
-        }
-        hostName = (char *) malloc(length + 1);
-        if (hostName)
-        {
-          memset(hostName, 0, length + 1);
-          memcpy(hostName, pointer, length);
-        }
+        Checked(ParseHostLine(line));
         return true;
       }
     }
+  }
+  return false;
+}
+
+bool HttpConnection::ParseFirstLine(const char *line)
+{
+  int index = 0;
+  int start = 0;
+  int length = 0;
+  while (line[index])
+  {
+    if (line[index] == ' ')
+    {
+      if (!start)
+      {
+        start = index + 1;
+      }
+      else
+      {
+        length = index - start;
+        break;
+      }
+    }
+    index++;
+  }
+  if (start > 0 && length > 0)
+  {
+    if (path)
+    {
+      free(path);
+      path = NULL;
+    }
+    path = (char *) malloc(length + 1);
+    if (path)
+    {
+      memset(path, 0, length + 1);
+      memcpy(path, line + start, length);
+      return true;
+    }
+  }
+  return false;
+}
+
+bool HttpConnection::ParseHostLine(const char *line)
+{
+  const char *pointer = line + 6;
+  int length = strlen(pointer) - 2;
+  if (hostName)
+  {
+    free(hostName);
+    hostName = NULL;
+  }
+  hostName = (char *) malloc(length + 1);
+  if (hostName)
+  {
+    memset(hostName, 0, length + 1);
+    memcpy(hostName, pointer, length);
+    return true;
   }
   return false;
 }
