@@ -49,6 +49,14 @@ bool Connection::HandleClient()
       ProxyConnection();
       return true;
     }
+    else
+    {
+      logger.Log("port %d, thread %d: connection rejected by filter", port, pthread_self());
+    }
+  }
+  else
+  {
+    logger.Log("port %d, thread %d: unable to resolve hostname", port, pthread_self());
   }
   return false;
 }
